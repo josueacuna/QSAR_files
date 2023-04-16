@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Calculadora de riesgo con base en el apéndice J. </title>
+	<style>
+		table {
+			border-collapse: collapse;
+		}
+		th, td {
+			border: 1px solid black;
+			padding: 5px;
+			text-align: center;
+		}
+		  /* Estilo para hacer que el texto sea rojo */
+		  .texto-rojo {
+        color: red;
+      }
+	</style>
+</head>
+<body>
+	<h1>Calculadora de riesgo con base en el apéndice J</h1>
+	<p class="texto-rojo">Introduce los datos solicitados. Las concentraciones deben ser en %. Puedes calcular hasta 6 impurezas</p>
+	<form>
+		<label for="dl50act">DL50 del activo:</label>
+		<input type="number" id="dl50act" name="dl50act" required><br>
+
+		<label for="cact">Concentración del ingrediente activo:</label>
+		<input type="number" id="cact" name="cact" required><br>
+
+		<label for="numimp">Número de impurezas:</label>
+		<input type="number" id="numimp" name="numimp" min="0" max="6" required><br>
+
+		<div id="impurezas"></div>
+
+		<button type="button" onclick="calcular()">Calcular</button>
+	</form>
+
+	<div id="resultados"></div>
+
+	<script>
+		function generarCamposImpurezas() {
+			// Obtenemos el número de impurezas ingresado por el usuario
+			let numImpurezas = parseInt(document.getElementById("numimp").value);
+
+			// Generamos los campos de entrada para cada impureza
+			let impurezasDiv = document.getElementById("impurezas");
+			let impurezasHtml = "";
+			for (let i = 0; i < numImpurezas; i++) {
+				impurezasHtml += `
+					<p>Impureza ${i + 1}:</p>
+					<label for="dl50imp${i}">DL50 de la impureza:</label>
+					<input type="number" id="dl50imp${i}" name="dl50imp${i}" required><br>
+
+					<label for="concimp${i}">Concentración de la impureza:</label>
+					<input type="number" id="concimp${i}" name="concimp${i}" required><br>
+				`;
+			}
+			impurezasDiv.innerHTML = impurezasHtml;
+		}
+
+		// Agregamos el evento change al campo numimp
+		document.getElementById("numimp").addEventListener("change", generarCamposImpurezas);
+
+		function calcular() {
+			// Obtenemos los valores ingresados por el usuario
+			let dl50act = parseFloat(document.getElementById("dl50act").value);
+			let cact = parseFloat(document.getElementById("cact").value);
+			let numImpurezas = parseInt(document.getElementById("numimp").value);
+
+			// Realizamos los cálculos para cada impureza y los almacenamos en un arreglo
+			let resultados = [];
+for (let i = 0; i < numImpurezas; i++) {
+    let dl50imp = parseFloat(document.getElementById(`dl50imp${i}`).value);
+    let concimp = parseFloat(document.getElementById(`concimp${i}`).value);
+
+    let relhazimp = (dl50act / dl50imp).toFixed(2);
+    let mtihaz = ((cact + (concimp * relhazimp)) / cact).toFixed(2);
+    let maxacep = ((0.1 * cact) / relhazimp).toFixed(2);
+    let porcmtihaz = ((mtihaz - 1) * 100).toFixed(2);
+			// Verificamos si la impureza es relevante o no
+			let relevancia = "";
+			if (porcmtihaz > 10) {
+				relevancia = `Toda vez que ${porcmtihaz}% es mayor a 10%, la impureza es relevante`;
+			} else {
+				relevancia = `Toda vez que ${porcmtihaz}% es menor a 10%, la impureza es no relevante`;
+			}
+
+			resultados.push({
+				impureza: `Impureza ${i + 1}`,
+				relhazimp: relhazimp,
+				mtihaz: mtihaz,
+				maxacep: maxacep,
+				porcmtihaz: porcmtihaz,
+				relevancia: relevancia
+			});
+		}
+
+		// Mostramos los resultados en una tabla
+		let resultadosDiv = document.getElementById("resultados");
+		let resultadosHtml = `
+			<table>
+				<tr>
+					<th>Impureza</th>
+					<th>Relación de peligrosidad con el activo</th>
+					<th>MTIHAZ</th>
+					<th>Máximo aceptable</th>
+					<th>% MTIHAZ</th>
+					<th>Relevancia</th>
+				</tr>
+		`;
+		for (let i = 0; i < resultados.length; i++) {
+			resultadosHtml += `
+				<tr>
+					<td>${resultados[i].impureza}</td>
+					<td>${resultados[i].relhazimp}</td>
+					<td>${resultados[i].mtihaz}</td>
+					<td>${resultados[i].maxacep}</td>
+					<td>${resultados[i].porcmtihaz}</td>
+					<td>${resultados[i].relevancia}</td>
+				</tr>
+			`;
+		}
+		resultadosHtml += "</table>";
+		resultadosDiv.innerHTML = resultadosHtml;
+	}
+</script>
+</body>
+</html>
